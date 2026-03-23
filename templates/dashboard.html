@@ -1,0 +1,89 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+
+<div class="dashboard-home-wrapper">
+
+    <div class="hero-card">
+        <div class="hero-content">
+            <h1>Bon retour, <span class="highlight">{{ user_name }}</span> ! 👋</h1>
+            <p class="subtitle">
+                {% if my_auth == 1 %}
+                    Prêt à dénicher votre prochaine mission ? Le marché est actif aujourd'hui.
+                {% else %}
+                    Gérez vos projets et trouvez les meilleurs talents pour votre entreprise.
+                {% endif %}
+            </p>
+        </div>
+        <div class="hero-image">
+            <div class="floating-icon">🚀</div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-title">Projets Actifs</span>
+            <div class="kpi-value">{{ stats.projets_actifs }}</div>
+            <span class="kpi-trend neutral">En cours</span>
+        </div>
+        
+        <div class="kpi-card">
+            <span class="kpi-title">
+                {% if my_auth == 1 %} Opportunités {% else %} Talents Dispo {% endif %}
+            </span>
+            <div class="kpi-value">{{ stats.matchs_potentiels }}</div>
+            <span class="kpi-trend positive">↑ Nouveau</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-title">Messages</span>
+
+            <div class="kpi-value">{{ stats.messages_non_lus }}</div>
+
+            {% if stats.messages_non_lus > 0 %}
+                <span class="kpi-trend positive">↑ Nouveaux reçus</span>
+            {% else %}
+                <span class="kpi-trend neutral">À jour</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <h3 class="section-title">Actions Rapides</h3>
+    
+    <div class="actions-grid">
+        
+        {% if current_user.autorisations == 2 %}
+        <a href="{{ url_for('tinder') }}" class="action-card tinder-style">
+            <div class="icon-box">🔥</div>
+            <div class="action-info">
+                <h4>Mode Swipe</h4>
+                <p>Trouvez votre match parfait en un instant.</p>
+            </div>
+            <div class="arrow">→</div>
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('projects') }}" class="action-card">
+            <div class="icon-box" style="background: #e0f2fe; color: #0284c7;">📂</div>
+            <div class="action-info">
+                <h4>
+                    {% if my_auth == 1 %} Mes Missions {% else %} Gérer les Projets {% endif %}
+                </h4>
+                <p>Suivez l'avancement et les jalons.</p>
+            </div>
+            <div class="arrow">→</div>
+        </a>
+
+        <a href="{{ url_for('chat') }}" class="action-card">
+            <div class="icon-box" style="background: #f3e8ff; color: #9333ea;">💬</div>
+            <div class="action-info">
+                <h4>Messagerie</h4>
+                <p>Discutez avec vos collaborateurs.</p>
+            </div>
+            <div class="arrow">→</div>
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

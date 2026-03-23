@@ -1,0 +1,146 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+    <div class="settings-container">
+        
+        <form method="POST" action="{{ url_for('settings') }}" enctype="multipart/form-data">
+
+            <div class="page-header">
+                <h1>Paramètres</h1>
+                <div class="header-actions">
+                    <a href="{{ url_for('compte') }}" class="btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center;">
+                        Annuler
+                    </a>
+                    <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                
+                <div class="settings-card">
+                    <h3>Profil Public</h3>
+                    <div class="profile-edit-section">
+                        <div class="avatar-large-edit" onclick="document.getElementById('avatar-upload').click();" style="position: relative; cursor: pointer;" title="Cliquez pour changer">
+                            <img src="{{ avatar_url }}" alt="User Avatar" class="avatar-image" style="width: 100%; height: 100%; object-fit: cover;">
+                            <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 12px; text-align: center; padding: 2px;">
+                                edit
+                            </div>
+                        </div>
+                        <input type="file" name="avatar" id="avatar-upload" style="display: none;" accept="image/*">
+                        <div class="profile-text-inputs">
+                            <div class="form-group">
+                                <label>Nom d'affichage</label>
+                                <input type="text" name="nom" class="form-input" value="{{ user[1] }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tags (séparés par des virgules)</label>
+                                <input type="text" name="tags" class="form-input" value="{{ user[4] if user[4] else '' }}" placeholder="Python, CSS, Flask...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-input" value="{{ user[2] }}">
+                    </div>
+                </div>
+            <div class="settings-card">
+                <h3 style="margin-bottom: 20px;"><i class="fas fa-id-card"></i> Compléter mon profil public</h3>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Ma Biographie</label>
+                    <textarea name="bio" class="form-input" rows="4" 
+                            placeholder="Décrivez votre parcours...">{{ user[7] if user[7] }}</textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Disponibilité actuelle</label>
+                    <select name="disponibilite" class="form-input">
+                        <option value="Disponible" {% if user[8] == 'Disponible' %}selected{% endif %}>🟢 Disponible</option>
+                        <option value="En mission" {% if user[8] == 'En mission' %}selected{% endif %}>🟡 En mission</option>
+                        <option value="Indisponible" {% if user[8] == 'Indisponible' %}selected{% endif %}>🔴 Indisponible</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Langues parlées</label>
+                    <input type="text" name="langues" class="form-input" 
+                        value="{{ user[9] if user[9] }}" placeholder="Ex: Français, Anglais (C1)">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Liens (LinkedIn, Portfolio, GitHub...)</label>
+                    <input type="text" name="liens" class="form-input" 
+                        value="{{ user[10] if user[10] }}" placeholder="Séparez les URLs par des virgules">
+                </div>
+            </div>
+
+                <div class="settings-card">
+                    <h3>Préférences</h3>
+                    <div class="form-group">
+                        <label>Langue</label>
+                        <select name="langue" class="form-input">
+                            <option value="Français" {% if session.get('langue') == 'Français' %}selected{% endif %}>Français</option>
+                            <option value="English" {% if session.get('langue') == 'English' %}selected{% endif %}>English</option>
+                            <option value="Español" {% if session.get('langue') == 'Español' %}selected{% endif %}>Español</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Devise par défaut</label>
+                        <select name="devise" class="form-input">
+                            <option value="EUR" {% if session.get('devise') == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                            <option value="USD" {% if session.get('devise') == 'USD' %}selected{% endif %}>USD ($)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Sécurité & API</h3>
+                    <div class="form-group">
+                        <label>Changer le mot de passe</label>
+                        <input type="password" name="new_password" class="form-input" placeholder="Laisser vide pour ne pas changer">
+                    </div>
+                </div>
+
+            </div> </form> 
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const inputCheck = document.getElementById('input-check-delete');
+                const btnDelete = document.getElementById('btn-delete-real');
+
+                inputCheck.addEventListener('input', function() {
+                    if (this.value === "Je souhaite supprimer mon compte") { 
+                        btnDelete.disabled = false;
+                        btnDelete.style.opacity = "1";
+                        btnDelete.style.cursor = "pointer";
+                    } else {
+                        btnDelete.disabled = true;
+                        btnDelete.style.opacity = "0.5";
+                        btnDelete.style.cursor = "not-allowed";
+                    }
+                });
+            });
+        </script>
+
+        <div class="settings-grid" style="margin-top: 20px;"> <div class="settings-card danger-zone">
+                <h3>Zone de Danger</h3>
+                <p>La suppression du compte est irréversible. Toutes vos données seront effacées.</p>
+                <p style="font-size: 0.9em; color: #666;">Veuillez taper "<strong>Je souhaite supprimer mon compte</strong>" ci-dessous pour activer le bouton.</p>
+                
+                <form action="{{ url_for('delete_account') }}" method="POST">
+                    <input type="text" 
+                        name="verification" 
+                        id="input-check-delete" 
+                        placeholder="Je souhaite..." 
+                        style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; width: 250px;"
+                        autocomplete="off"
+                        required>
+
+                    <button type="submit" class="btn-danger" id="btn-delete-real" disabled style="opacity: 0.5; cursor: not-allowed;">
+                        Supprimer mon compte
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

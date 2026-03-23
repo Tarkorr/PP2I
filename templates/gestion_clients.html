@@ -1,0 +1,122 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+
+<div class="gestion_du_sites">
+        
+    <div class="gsite-header">
+        <h1>Clients / Entreprises</h1>
+        <div style="display: flex; gap: 15px;">
+            <button onclick="openPopup('popup-ajout')" class="btn-primary">✚ Nouveau Client</button>
+        </div>
+    </div>
+
+    <div class="gsite-search">
+        <input type="text" id="name-search" placeholder="Rechercher un client...">🔎
+    </div>
+   
+    <div id="popup-ajout" class="overlay-popup">
+        <div class="content-popup">
+            <h3 style="margin-bottom: 20px;">Ajouter un client :</h3>
+            <form method="POST" class="add-form">
+                <div class="form-group">
+                    <div><label for="nom_complet">Nom de l'entreprise :</label></div>
+                    <input class="form-input" type="text" name="nom_complet" id="nom_complet" required placeholder="Ex: Entreprise A">
+                </div>      
+                <div class="form-group">
+                    <div><label for="email">Email contact : </label></div>                    
+                    <input class="form-input" type="email" name="email" id="email" required placeholder="contact@entreprise.com">
+                </div>
+                <div class="form-group">
+                    <div><label for="secteur">Secteur d'activité : </label></div>
+                    <select class="form-input" name="secteur" id="secteur">
+                        <option value="Informatique">Informatique / Tech</option>
+                        <option value="Industrie">Industrie</option>
+                        <option value="Finance">Finance / Banque</option>
+                        <option value="Sante">Santé</option>
+                        <option value="Retail">Commerce / Retail</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                
+                <div class="gsite-right">
+                    <button type="submit" name="action" value="add-client" class="btn-primary">Ajouter</button>
+                </div>
+            </form> 
+        </div>
+    </div>
+
+    <div id="popup-suppr" class="overlay-popup">
+        <div class="content-popup">
+            <h1>Êtes-vous sûr de vouloir supprimer ?</h1>
+            <p style="color: #666; margin-bottom: 20px;">Cela pourrait affecter les projets liés à ce client.</p>
+            <button type="submit" name="action" value="delete-clients" form="form-clients" class="btn-danger" style="align-items: center; font-size: 20px;">Confirmer la suppression</button>
+        </div>
+    </div>
+
+    <form method="POST" action="/gestion_clients" id="form-clients">
+        <div class="table-card">
+            <table class="gsite-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>ID</th>
+                        <th>Nom Entreprise</th>
+                        <th>Email Contact</th>
+                        <th>Secteur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for client in clients %}
+                    <tr class="name-item">
+                        <td>
+                            <input type="checkbox" name="client-ids" value="{{ client['id'] }}" onclick="event.stopPropagation()"/>
+                        </td>
+                        <td>{{ client['id'] }}</td>
+                        <td class="name-select" style="font-weight: bold;">{{ client['nom_complet'] }}</td>
+                        <td>{{ client['email'] }}</td>
+                        <td><span class="tag-pill">{{ client['secteur'] }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #999;">Aucun client enregistré.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <div class="gsite-right" style="gap: 10px; margin-top: 15px;">
+        <button type="button" class="btn-danger" onclick="openPopup('popup-suppr')">Supprimer la sélection</button> 
+    </div>
+    
+</div>
+
+<script>
+    const openPopup = (popupId) => {
+        const popup = document.getElementById(popupId);
+        if(popup) popup.classList.add('activate-popup');
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('overlay-popup')) {
+            event.target.classList.remove('activate-popup');
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('name-search');
+        const items = document.querySelectorAll('.name-item');
+
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            items.forEach(element => {
+                const name = element.querySelector('.name-select').textContent.toLowerCase();
+                element.style.display = name.includes(searchTerm) ? "" : "none";
+            });
+        });
+    });
+</script>
+
+{% endblock %}

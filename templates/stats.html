@@ -1,0 +1,187 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="settings-container">
+    <div class="page-header">
+        <h1>Statistiques de la Plateforme</h1>
+        <div class="header-actions">
+            <span class="tag-pill" style="background: #e0f2fe; color: #0284c7;">
+                Vue Administrateur
+            </span>
+        </div>
+    </div>
+
+    <div class="account-dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
+        
+        <div class="settings-card stat-card">
+            <h3>Utilisateurs</h3>
+            <div class="stat-content">
+                <p style="font-size: 2rem; font-weight: bold; margin: 10px 0;">{{ total_users }}</p>
+                <p style="color: #666;">Dont <strong style="color: #f59e0b;">{{ pending_users }}</strong> en attente</p>
+            </div>
+        </div>
+
+        <div class="settings-card stat-card">
+            <h3>Projets</h3>
+            <div class="stat-content">
+                <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #3b82f6;">{{ total_projects }}</p>
+                <p style="color: #666;">Créés sur la plateforme</p>
+            </div>
+        </div>
+
+        <div class="settings-card stat-card">
+            <h3>Messages</h3>
+            <div class="stat-content">
+                <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #10b981;">{{ total_messages }}</p>
+                <p style="color: #666;">Échangés au total</p>
+            </div>
+        </div>
+
+        <div class="settings-card stat-card">
+            <h3>Documents</h3>
+            <div class="stat-content">
+                <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #8b5cf6;">{{ total_documents }}</p>
+                <p style="color: #666;">Fichiers hébergés</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 30px;">
+        
+        <div class="settings-card">
+            <h3>État des Projets</h3>
+            <div style="height: 250px; display: flex; justify-content: center;">
+                <canvas id="projectsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h3>Répartition des Rôles</h3>
+            <div style="height: 250px; display: flex; justify-content: center;">
+                <canvas id="usersChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-card" style="margin-bottom: 30px;">
+        <h3>Offre vs Demande (Top 10 Compétences)</h3>
+        <div style="height: 300px;">
+            <canvas id="skillsChart"></canvas>
+        </div>
+    </div>
+
+    <div class="settings-card">
+        <h3>Activité de Matching</h3>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="flex: 1; height: 200px;">
+                <canvas id="matchingChart"></canvas>
+            </div>
+            <div style="flex: 1;">
+                <p><strong>Analyse :</strong></p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px;"><strong>{{ interactions_stats['LIKE'] }}</strong> profils retenus</li>
+                    <li style="margin-bottom: 10px;"><strong>{{ interactions_stats['PASS'] }}</strong> profils écartés</li>
+                    <li>Taux de succès : 
+                        {% if (interactions_stats['LIKE'] + interactions_stats['PASS']) > 0 %}
+                            <strong>{{ ((interactions_stats['LIKE'] / (interactions_stats['LIKE'] + interactions_stats['PASS'])) * 100) | round(1) }}%</strong>
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    
+    // --- 1. CONFIG PROJETS ---
+    const ctxProjects = document.getElementById('projectsChart').getContext('2d');
+    new Chart(ctxProjects, {
+        type: 'doughnut',
+        data: {
+            labels: ['Brouillon', 'En attente', 'Négociation', 'Validé', 'Terminé'],
+            datasets: [{
+                // On utilise la variable préparée en Python
+                data: {{ projects_chart_data | tojson | safe }},
+                backgroundColor: ['#9ca3af', '#3b82f6', '#f59e0b', '#10b981', '#1f2937'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // --- 2. CONFIG UTILISATEURS ---
+    const ctxUsers = document.getElementById('usersChart').getContext('2d');
+    new Chart(ctxUsers, {
+        type: 'pie',
+        data: {
+            labels: ['Intervenants', 'Clients', 'Admins'],
+            datasets: [{
+                data: {{ users_chart_data | tojson | safe }},
+                backgroundColor: ['#8b5cf6', '#0ea5e9', '#ef4444'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // --- 3. CONFIG SKILLS (BAR CHART) ---
+    const ctxSkills = document.getElementById('skillsChart').getContext('2d');
+    new Chart(ctxSkills, {
+        type: 'bar',
+        data: {
+            // Les labels (noms des compétences)
+            labels: {{ skills_labels | tojson | safe }},
+            datasets: [
+                {
+                    label: 'Talents disponibles (Intervenants)',
+                    data: {{ skills_supply_data | tojson | safe }},
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Demande du marché (Projets)',
+                    data: {{ skills_demand_data | tojson | safe }},
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // --- 4. CONFIG MATCHING ---
+    const ctxMatch = document.getElementById('matchingChart').getContext('2d');
+    new Chart(ctxMatch, {
+        type: 'bar',
+        data: {
+            labels: ['Likes', 'Dislikes'],
+            datasets: [{
+                label: 'Interactions',
+                data: [{{ interactions_stats['LIKE'] }}, {{ interactions_stats['PASS'] }}],
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+
+{% endblock %}

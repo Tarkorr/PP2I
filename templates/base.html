@@ -4,24 +4,41 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon appli</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    {% block css %}
+    <link rel="icon" type="image/png" href="static/img/logo_tab.png">
+    <title>Prospector</title>
 
-    {% endblock %}
+    <!-- CSS global -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block css %}{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
 </head>
-<body>
-    <nav id="navbar">
-        <ul id="navbar-items">
-            <li class="navbar-item">
-                <a href="#">Accueil</a>
-            </li>
-        </ul> 
+<body class="app-body">
+    <nav id="navbar" class="navbar">
+        <div class="navbar-inner">
+            <div class="navbar-left">
+                <a href="{{ url_for('index') }}" class="navbar-brand">
+                    Prospector
+                </a>
+            </div>
+
+            <div class="navbar-right">
+                {% if current_user.is_authenticated %}
+                    <span class="navbar-user">
+                        Connecté : {{ current_user.email_utilisateur }}
+                    </span>
+                    <a class="navbar-link" href="{{ url_for('logout') }}">Se déconnecter</a>
+                {% else %}
+                    <a class="navbar-link" href="{{ url_for('login') }}">Se connecter</a>
+                    <a class="navbar-link navbar-link-primary" href="{{ url_for('register') }}">S'inscrire</a>
+                {% endif %}
+            </div>
+        </div>
     </nav>
-    
-    <div id="container">
+
+    <main id="container" class="main-container">
         {% block content %}{% endblock %}
-    </div>
-    
+    </main>
 </body>
 </html>

@@ -1,0 +1,166 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="page-header">
+        <h1>👥 Attribution des Intervenants</h1>
+    </div>
+
+    <div class="settings-card" style="margin-bottom: 20px;">
+        <form method="GET" action="{{ url_for('attribution') }}" class="filter-bar">
+            
+            <div class="filter-group-grow">
+                <label class="filter-label">Rechercher un projet</label>
+                <div class="search-input-wrapper">
+                    <input type="text" name="q" value="{{ current_search }}" placeholder="Nom du projet...">
+                    {% if current_search %}
+                        <a href="{{ url_for('attribution') }}" class="search-clear-btn">✕</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="filter-group-fixed">
+                <label class="filter-label">Filtrer par statut</label>
+                <select name="status" class="form-input" onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    <option value="waiting" {% if current_status == 'waiting' %}selected{% endif %}>En attente</option>
+                    <option value="nego" {% if current_status == 'nego' %}selected{% endif %}>En cours</option>
+                    <option value="won" {% if current_status == 'won' %}selected{% endif %}>Terminé</option>
+                    <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Brouillon</option>
+                </select>
+            </div>
+
+            <div>
+                <button type="submit" class="btn-primary" style="height: 42px; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if not data %}
+        <div class="empty-state">
+            <div class="icon-box" style="margin: 0 auto 20px; background: #e0f2fe; color: #0284c7;">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Aucun projet trouvé</h3>
+            <p>Essayez de modifier vos filtres de recherche.</p>
+            <a href="{{ url_for('attribution') }}" class="btn-secondary" style="margin-top: 10px; display: inline-block;">Réinitialiser</a>
+        </div>
+    {% else %}
+
+        <div class="settings-grid">
+            
+            {% for item in data %}
+            <div class="settings-card">
+                <div class="project-header-compact">
+                    
+                    <div class="project-title-wrapper">
+                        
+                        <span class="col-eyebrow" style="color: #22c55e;">Projet #{{ item.project_id }}</span>
+                        
+                        <div class="project-title-row">
+                            <h3 class="project-title-text">
+                                {{ item.project_title }}
+                            </h3>
+                            
+                            {% if item.status == 'waiting' %}
+                                <span class="status-badge-pill status-waiting">En attente</span>
+                            {% elif item.status == 'nego' %}
+                                <span class="status-badge-pill status-nego">Négociation</span>
+                            {% elif item.status == 'won' %}
+                                <span class="status-badge-pill status-won">Validé</span>
+                            {% elif item.status == 'draft' %}
+                                <span class="status-badge-pill status-draft">Brouillon</span>
+                            {% elif item.status == 'finished' %}
+                                <span class="status-badge-pill status-finished">Terminé</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="candidate-count">
+                        {{ item.candidates|length }} candidat(s)
+                    </div>
+                </div>
+                
+                <div class="gsite-table-card" style="box-shadow: none; border: 1px solid #f3f4f6; border-top: none; max-height: 350px; overflow-y: auto;">
+                    <table class="gsite-table">
+                        <thead class="sticky-thead">
+                            <tr>
+                                <th>Candidat</th>
+                                <th>Compétences</th>
+                                <th>Avis Client</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for candidate in item.candidates %}
+                            <tr class="{% if candidate.is_assigned %}tr-assigned{% endif %}">
+                                <td>
+                                    <div class="candidate-info">
+                                        <img src="{{ candidate.avatar }}" class="avatar-small" alt="Avatar">
+                                        <div class="candidate-details">
+                                            <div>{{ candidate.nom }}</div>
+                                            <div>{{ candidate.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="skill-tags-wrapper">
+                                        {% for tag in candidate.tags.split(',')[:2] %}
+                                            {% if tag %}
+                                            <span class="skill-tag">
+                                                {{ tag.strip() }}
+                                            </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if candidate.action == 'LIKE' %}
+                                        <span class="action-badge action-like">
+                                            ❤️ COUP DE CŒUR
+                                        </span>
+                                        <div class="action-by">
+                                            par <strong>{{ candidate.client_nom }}</strong>
+                                        </div>
+                                    {% elif candidate.action == 'PASS' %}
+                                        <span class="action-badge action-pass">
+                                            ❌ ÉCARTÉ
+                                        </span>
+                                        <div class="action-by">
+                                            par <strong>{{ candidate.client_nom }}</strong>
+                                        </div>
+                                    {% else %}
+                                        <span class="action-badge action-wait">
+                                            ⏳ En attente d'avis
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right;">
+                                    {% if candidate.is_assigned %}
+                                        <span class="assigned-check">
+                                            ✔ Dans l'équipe
+                                        </span>
+                                    {% else %}
+                                        <form method="POST" action="{{ url_for('attribution') }}">
+                                            <input type="hidden" name="project_id" value="{{ item.project_id }}">
+                                            <input type="hidden" name="candidate_email" value="{{ candidate.email }}">
+                                            <button type="submit" class="btn-primary btn-assign">
+                                                + Attribuer
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

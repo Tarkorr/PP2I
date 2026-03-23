@@ -1,0 +1,171 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+
+<div class="intervenants-wrapper">
+    
+    <div class="header-with-action">
+        <h2 class="page-title" style="margin: 0;">
+            {% if my_auth == 1 %}
+                Projets disponibles pour vous
+            {% elif my_auth == 2 %}
+                Meilleurs profils pour vos projets
+            {% else %}
+                Dashboard
+            {% endif %}
+        </h2>
+    </div>
+    
+    {% if my_auth == 1 %}
+        <div class="match-list-container">
+            {% for project in projects %}
+                <div class="match-card project-card">
+                    <div class="match-score-pill">{{ project.score }}% Match</div>
+                    <h3>{{ project.title }}</h3>
+                </div>
+            {% endfor %}
+        </div>
+
+    {% elif my_auth == 2 %}
+        {% if client_data %}
+            {% for data in client_data %}
+                
+                <div class="project-matching-section">
+                    
+                    <div class="section-header-client">
+                        <div class="header-top-row">
+                            <h3>📂 {{ data.project_title }}</h3>
+                            <span class="company-badge">🏢 {{ data.client_name }}</span>
+                            <a href="{{ url_for('tinder', p=data.project_id) }}" class="btn-tinder-mini">
+                                Swipe
+                            </a>
+                        </div>
+                        <div class="tags-required-container">
+                            <span class="tags-label">Compétences requises :</span>
+                            <div class="tags-list">
+                                {% if data.required_tags %}
+                                    {% for tag in data.required_tags.split(',') %}
+                                        {% if tag.strip() %}
+                                            <span class="tag-pill">{{ tag.strip() }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="no-tags">Aucun tag spécifié</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="candidates-scroll-container">
+                        {% for candidate in data.candidates %}
+                        
+                        <div class="match-card candidate-mini-card {% if candidate.interaction_status == 'LIKE' %}card-liked{% elif candidate.interaction_status == 'PASS' %}card-passed{% endif %}" 
+                             id="card-{{ candidate.id }}-{{ data.project_id }}">
+                            
+                            <div class="match-score-pill small" style="background-color: 
+                                {% if candidate.score == 100 %}#22c55e{% elif candidate.score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+                                {{ candidate.score }}%
+                            </div>
+                            
+                            <div class="avatar-large" style="width: 50px; height: 50px; font-size: 18px; margin-bottom: 5px;">
+                                {{ candidate.initiales }}
+                            </div>
+                            
+                            <h4>{{ candidate.nom }}</h4>
+                            
+                            <p class="match-details">
+                                <small>Match : {{ candidate.common_tags }}</small>
+                            </p>
+
+                            {% if candidate.interaction_status %}
+                                <div class="interaction-badge {{ candidate.interaction_status|lower }}">
+                                    {% if candidate.interaction_status == 'LIKE' %}
+                                        ✔ Retenu
+                                    {% else %}
+                                        ✖ Ignoré
+                                    {% endif %}
+                                </div>
+                                <a href="{{ url_for('compte', id=candidate.id) }}" class="btn-view-profile-simple" style="margin-top:5px; display:block; text-align:center;">Voir profil</a>
+
+                            {% else %}
+                                <div class="mini-actions-row" id="actions-{{ candidate.id }}-{{ data.project_id }}">
+                                    <button class="btn-mini-action pass" 
+                                            onclick="quickAction(this, '{{ candidate.id }}', '{{ data.project_id }}', 'PASS')" 
+                                            title="Passer">
+                                        ✖
+                                    </button>
+                                    
+                                    <a href="{{ url_for('compte', id=candidate.id) }}" class="btn-view-profile-simple">Voir</a>
+
+                                    <button class="btn-mini-action like" 
+                                            onclick="quickAction(this, '{{ candidate.id }}', '{{ data.project_id }}', 'LIKE')" 
+                                            title="Retenir">
+                                        ✔
+                                    </button>
+                                </div>
+
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div> </div> <hr class="divider">
+            {% endfor %} {% else %}
+            <div class="empty-state">
+                <p>Vous n'avez aucun projet en attente ('waiting').</p>
+                <p>Créez une commande pour voir les suggestions !</p>
+            </div>
+        {% endif %}
+
+    {% endif %}
+</div>
+
+<script>
+    function quickAction(btnElement, targetId, projectId, action) {
+        btnElement.disabled = true;
+        
+        const baseUrl = "{{ url_for('tinder_action', target_id=0, action='ACTION') }}";
+        const url = baseUrl.replace('0', targetId).replace('ACTION', action);
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: projectId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Au lieu de supprimer la carte, on la transforme visuellement
+                const card = document.getElementById(`card-${targetId}-${projectId}`);
+                const actionsRow = document.getElementById(`actions-${targetId}-${projectId}`);
+                
+                if (card && actionsRow) {
+                    // 1. On retire les boutons
+                    actionsRow.remove();
+                    
+                    // 2. On ajoute le badge
+                    let badgeHtml = '';
+                    if (action === 'LIKE') {
+                        card.classList.add('card-liked');
+                        badgeHtml = '<div class="interaction-badge like">✔ Retenu</div>';
+                    } else {
+                        card.classList.add('card-passed');
+                        badgeHtml = '<div class="interaction-badge pass">✖ Ignoré</div>';
+                    }
+                    
+                    // On insère le badge et on remet le lien voir profil centré
+                    const profileLink = `<a href="/compte?id=${targetId}" class="btn-view-profile-simple" style="margin-top:5px; display:block; text-align:center;">Voir profil</a>`;
+                    
+                    card.insertAdjacentHTML('beforeend', badgeHtml + profileLink);
+                }
+            } else {
+                alert("Erreur : " + (data.message || "Une erreur est survenue"));
+                btnElement.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            btnElement.disabled = false;
+        });
+    }
+</script>
+
+{% endblock %}

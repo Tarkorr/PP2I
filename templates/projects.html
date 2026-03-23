@@ -1,0 +1,123 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+    <div class="projects-container">
+        
+        <div class="page-header">
+            <div class="header-left">
+                <h1>Mes Projets</h1>
+                <div class="filter-tabs">
+                    <span class="filter-tab active" onclick="filterProjects('all', this)">Tous</span>
+                    <span class="filter-tab" onclick="filterProjects('ongoing', this)">En cours</span>
+                    <span class="filter-tab" onclick="filterProjects('completed', this)">Terminés</span>
+                </div>
+            </div>
+            {% if is_client %}
+                <button class="btn-primary" onclick="goToProjectCreation()">+ Nouveau Projet</button>
+            {% endif %}
+        </div>
+
+        <div class="projects-grid">
+            
+            {% for project in projects %}
+            <div class="project-card" 
+                data-status="{% if project.percent == 100 %}completed{% else %}ongoing{% endif %}"
+                onclick="window.location.href='{{ url_for('projects', p=project.id) }}'"
+                style="cursor: pointer;">
+                <div class="p-header">
+                    <div class="p-icon" style="background-color: hsl({{ project.id * 50 }}, 70%, 50%);">
+                        {{ project.initiale }}
+                    </div>
+                    <div class="p-options">⋮</div>
+                </div>
+                
+                <h3 class="p-title">{{ project.titre }}</h3>
+                <p class="p-client">Client: {{ project.client }}</p>
+                
+                <div class="p-tags">
+                    {% for tag in project.tags %}
+                        <span class="tag">{{ tag }}</span>
+                    {% else %}
+                        <span class="tag" style="background: transparent; border: 1px dashed #444; color: #666;">Aucun tag</span>
+                    {% endfor %}
+                </div>
+
+                <div class="p-progress-section">
+                    <div class="p-info-row">
+                        <span>Progression</span>
+                        <span>{{ project.percent }}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-fill" 
+                             style="width: {{ project.percent }}%; 
+                                    background-color: {% if project.percent == 100 %}#28a745{% elif project.percent < 30 %}#ffc107{% else %}#007bff{% endif %};">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-footer">
+                    <div class="avatar-stack">
+                        <img src="{{ current_user.gravatar_url }}" class="avatar-tiny" style="border: 2px solid #252526;">
+                    </div>
+                    
+                    {% if project.percent == 100 %}
+                        <div class="p-date success">✅ Terminé</div>
+                    
+                    {% elif project.days_left < 0 %}
+                        <div class="p-date warning" style="color: #dc3545;">🔥 Retard ({{ project.days_left|abs }}j)</div>
+                    
+                    {% elif project.days_left <= 5 %}
+                        <div class="p-date warning">⚠️ J-{{ project.days_left }}</div>
+                    
+                    {% else %}
+                        <div class="p-date">🕒 {{ project.date_fin }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if is_client %}
+                <div class="project-card new-project-card" onclick="goToProjectCreation()">
+                    <div class="add-icon">+</div>
+                    <p>Créer un projet</p>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+<script>
+    function filterProjects(status, element) {
+        document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+        element.classList.add('active');
+        const allProjects = document.querySelectorAll('.project-card:not(.new-project-card)');
+        const newProjectCard = document.querySelector('.new-project-card');
+        allProjects.forEach(card => {
+            if (status === 'all') {
+                card.style.display = 'flex';
+            } else {
+                if (card.dataset.status === status) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+        if (newProjectCard) {
+            if (status === 'completed') {
+                newProjectCard.style.display = 'none';
+            } else {
+                newProjectCard.style.display = 'flex';
+            }
+        }
+    }
+
+    function goToProjectCreation() {
+        const requestForm = document.getElementById('request-form');
+        if (requestForm) {
+            requestForm.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+        window.location.href = '{{ url_for('projects') }}#request-form';
+    }
+</script>
+{% endblock %}

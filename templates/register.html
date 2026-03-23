@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-shell">
+    <div class="auth-card">
+        <h1 class="auth-title">Créer un compte</h1>
+        <p class="auth-subtitle">Inscrivez-vous pour utiliser Prospector.</p>
+
+        <form class="auth-form" action="{{ url_for('register') }}" method="POST">
+            <div class="auth-field">
+                <label class="auth-label" for="nom">Nom</label>
+                <input class="auth-input" type="text" name="nom" id="nom" required autocomplete="name">
+            </div>
+
+            <div class="auth-field">
+                <label class="auth-label" for="email">Adresse e-mail</label>
+                <input class="auth-input" type="email" name="email" id="email" required autocomplete="email">
+            </div>
+
+            <div class="auth-field">
+                <label class="auth-label" for="mdp">Mot de passe</label>
+                <input class="auth-input" type="password" name="mdp" id="mdp" required autocomplete="new-password">
+            </div>
+
+            <div class="auth-field">
+                <label class="auth-label" for="role">Type de compte</label>
+                <select class="auth-input" name="role" id="role">
+                    <option value="intervenant">Intervenant / équipe</option>
+                    <option value="client">Client (accès demande de projet)</option>
+                </select>
+            </div>
+
+            <div class="auth-field">
+                <label class="auth-label" for="tags">Tags (séparés par des virgules)</label>
+                <input class="auth-input" type="text" name="tags" id="tags" placeholder="ex: python, marketing">
+            </div>
+            {% if error %}
+            <div class="auth-error">
+            {{ error }}
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+        </form>
+
+        <div class="auth-bottom-text">
+            Vous avez déjà un compte ?
+            <a href="{{ url_for('login') }}">Connectez-vous</a>
+        </div>
+
+        <div class="auth-back-link">
+            <a href="{{ url_for('welcome') }}">⟵ Retour à l'accueil</a>
+        </div>
+    </div>
+    <aside class="auth-panel">
+        <div class="auth-panel-inner">
+            <span class="eyebrow">Onboarding</span>
+            <h2>Créez un espace clair pour chaque mission.</h2>
+            <p>Votre équipe et vos clients gardent la même vue sur l'avancement.</p>
+            <ul class="auth-list">
+                <li>Briefs et demandes regroupés</li>
+                <li>Suivi des livrables en temps réel</li>
+                <li>Historique des échanges centralisé</li>
+            </ul>
+        </div>
+    </aside>
+</div>
+{% endblock %}

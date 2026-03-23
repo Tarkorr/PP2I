@@ -1,6 +1,41 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Accueil</h1>
-<p>Bonjour et bienvenue sur mon site !</p>
+<section class="hero">
+    <div class="hero-content">
+        <span class="eyebrow">Prospector</span>
+        <h1 class="hero-title">Repérez, suivez, livrez vos projets avec sérénité.</h1>
+        <p class="hero-text">
+            Prospector centralise vos demandes, l'attribution des missions et le suivi client pour une équipe toujours alignée.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="{{ url_for('login') }}">Se connecter</a>
+            <a class="btn btn-secondary" href="{{ url_for('register') }}">Créer un compte</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span>Suivi</span>
+                <strong>24/7</strong>
+            </div>
+            <div class="hero-stat">
+                <span>Clients</span>
+                <strong>+120</strong>
+            </div>
+            <div class="hero-stat">
+                <span>Projets</span>
+                <strong>300+</strong>
+            </div>
+        </div>
+    </div>
+    <div class="hero-card">
+        <span class="status-pill">Workflow fluide</span>
+        <h3>Tableau de bord prêt à l'emploi</h3>
+        <p>Gardez la priorité sur ce qui compte avec une vue claire des prochaines actions.</p>
+        <ul class="hero-list">
+            <li>Attribution rapide des tâches</li>
+            <li>Suivi client en temps réel</li>
+            <li>Historique et documents centralisés</li>
+        </ul>
+    </div>
+</section>
 {% endblock %}
