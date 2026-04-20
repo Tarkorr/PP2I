@@ -1,0 +1,245 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<div class="project-detail-container">
+    <div class="detail-header">
+        <div class="header-left">
+            <a href="{{ url_for('projects', p=project_id) }}" class="back-link">&lt;- Retour au projet</a>
+            <div class="title-row">
+                <h1>Jalons - {{ project_title }}</h1>
+            </div>
+            <p class="subtitle">Structurez chaque jalon, son contexte et les actions attendues par intervenant.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="jalon-editor" action="{{ url_for('edit_jalons', p=project_id) }}">
+        <input type="hidden" name="project_id" value="{{ project_id }}">
+        <template id="intervenant-options">
+            <option value="" disabled selected>Selectionner un intervenant</option>
+            {% for user in project_intervenants %}
+            <option value="{{ user.id }}">{{ user.nom }} - {{ user.email }}</option>
+            {% endfor %}
+        </template>
+
+        <div class="jalon-list" id="jalon-list">
+            {% for jalon in jalons %}
+            <div class="detail-card jalon-card" data-index="{{ loop.index0 }}">
+                <div class="jalon-card-header">
+                    <h3>Jalon {{ loop.index }}</h3>
+                    <button type="button" class="btn-secondary btn-remove-jalon">Supprimer</button>
+                </div>
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Titre du jalon *</span>
+                        <input type="text" name="jalon_title[]" value="{{ jalon.nom }}" required>
+                    </label>
+                    <label class="form-field">
+                        <span>Date limite</span>
+                        <input type="date" name="jalon_date[]" value="{{ jalon.date or '' }}">
+                    </label>
+                </div>
+                <label class="form-field">
+                        <span>Description generale</span>
+                    <textarea name="jalon_description[]" rows="3">{{ jalon.description or '' }}</textarea>
+                </label>
+
+                <div class="assignment-block">
+                    <div class="assignment-header">
+                        <div>
+                            <h4>Intervenants lies</h4>
+                            <p class="muted">Definissez les actions attendues pour chaque intervenant.</p>
+                        </div>
+                        <button type="button" class="btn-secondary btn-add-assignment">Ajouter un intervenant</button>
+                    </div>
+
+                    <div class="assignment-list">
+                        {% if jalon.assignations %}
+                            {% for assignation in jalon.assignations %}
+                            <div class="assignment-row">
+                                <select name="assignment_intervenant_id_{{ loop.parent.index0 }}[]" required>
+                                    <option value="" disabled>Selectionner un intervenant</option>
+                                    {% for user in project_intervenants %}
+                                    <option value="{{ user.id }}" {% if user.id == assignation.intervenant_id %}selected{% endif %}>{{ user.nom }} - {{ user.email }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="assignment_task_{{ loop.parent.index0 }}[]" value="{{ assignation.tache }}" placeholder="Tache ou objectif">
+                                <button type="button" class="btn-mini-action pass btn-remove-assignment">x</button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="assignment-row">
+                                <select name="assignment_intervenant_id_{{ loop.index0 }}[]" required>
+                                    <option value="" disabled selected>Selectionner un intervenant</option>
+                                    {% for user in project_intervenants %}
+                                    <option value="{{ user.id }}">{{ user.nom }} - {{ user.email }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="assignment_task_{{ loop.index0 }}[]" placeholder="Tache ou objectif">
+                                <button type="button" class="btn-mini-action pass btn-remove-assignment">x</button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="detail-card jalon-card" data-index="0">
+                <div class="jalon-card-header">
+                    <h3>Jalon 1</h3>
+                    <button type="button" class="btn-secondary btn-remove-jalon">Supprimer</button>
+                </div>
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Titre du jalon *</span>
+                        <input type="text" name="jalon_title[]" required>
+                    </label>
+                    <label class="form-field">
+                        <span>Date limite</span>
+                        <input type="date" name="jalon_date[]">
+                    </label>
+                </div>
+                <label class="form-field">
+                    <span>Description generale</span>
+                    <textarea name="jalon_description[]" rows="3"></textarea>
+                </label>
+
+                <div class="assignment-block">
+                    <div class="assignment-header">
+                        <div>
+                        <h4>Intervenants lies</h4>
+                        <p class="muted">Definissez les actions attendues pour chaque intervenant.</p>
+                        </div>
+                        <button type="button" class="btn-secondary btn-add-assignment">Ajouter un intervenant</button>
+                    </div>
+
+                    <div class="assignment-list">
+                        <div class="assignment-row">
+                            <select name="assignment_intervenant_id_0[]" required>
+                                <option value="" disabled selected>Selectionner un intervenant</option>
+                                {% for user in project_intervenants %}
+                                <option value="{{ user.id }}">{{ user.nom }} - {{ user.email }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" name="assignment_task_0[]" placeholder="Tache ou objectif">
+                            <button type="button" class="btn-mini-action pass btn-remove-assignment">x</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="actions-row">
+            <button type="button" class="btn-secondary" id="add-jalon">Ajouter un jalon</button>
+            <button type="submit" class="btn-primary">Enregistrer les jalons</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const jalonList = document.getElementById("jalon-list");
+
+    const createAssignmentRow = (index) => {
+        const options = document.getElementById("intervenant-options").innerHTML;
+        const row = document.createElement("div");
+        row.className = "assignment-row";
+        row.innerHTML = `
+            <select name="assignment_intervenant_id_${index}[]" required>
+                ${options}
+            </select>
+            <input type="text" name="assignment_task_${index}[]" placeholder="Tache ou objectif">
+            <button type="button" class="btn-mini-action pass btn-remove-assignment">x</button>
+        `;
+        return row;
+    };
+
+    const wireJalonCard = (card) => {
+        const addAssignmentBtn = card.querySelector(".btn-add-assignment");
+        const assignmentList = card.querySelector(".assignment-list");
+        const removeJalonBtn = card.querySelector(".btn-remove-jalon");
+
+        addAssignmentBtn.addEventListener("click", () => {
+            const currentIndex = card.dataset.index;
+            assignmentList.appendChild(createAssignmentRow(currentIndex));
+        });
+
+        assignmentList.addEventListener("click", (event) => {
+            if (event.target.classList.contains("btn-remove-assignment")) {
+                const row = event.target.closest(".assignment-row");
+                if (assignmentList.children.length > 1) {
+                    row.remove();
+                }
+            }
+        });
+
+        removeJalonBtn.addEventListener("click", () => {
+            if (jalonList.children.length > 1) {
+                card.remove();
+                refreshJalonIndexes();
+            }
+        });
+    };
+
+    const refreshJalonIndexes = () => {
+        [...jalonList.children].forEach((card, idx) => {
+            card.dataset.index = idx;
+            const title = card.querySelector("h3");
+            if (title) {
+                title.textContent = `Jalon ${idx + 1}`;
+            }
+            card.querySelectorAll(".assignment-row").forEach((row) => {
+                const selectInput = row.querySelector("select");
+                const taskInput = row.querySelector("input[type='text']");
+                if (selectInput) {
+                    selectInput.name = `assignment_intervenant_id_${idx}[]`;
+                }
+                if (taskInput) {
+                    taskInput.name = `assignment_task_${idx}[]`;
+                }
+            });
+        });
+    };
+
+    document.getElementById("add-jalon").addEventListener("click", () => {
+        const index = jalonList.children.length;
+        const card = document.createElement("div");
+        card.className = "detail-card jalon-card";
+        card.dataset.index = index;
+        card.innerHTML = `
+            <div class="jalon-card-header">
+                <h3>Jalon ${index + 1}</h3>
+                <button type="button" class="btn-secondary btn-remove-jalon">Supprimer</button>
+            </div>
+            <div class="form-grid">
+                <label class="form-field">
+                    <span>Titre du jalon *</span>
+                    <input type="text" name="jalon_title[]" required>
+                </label>
+                <label class="form-field">
+                    <span>Date limite</span>
+                    <input type="date" name="jalon_date[]">
+                </label>
+            </div>
+            <label class="form-field">
+                    <span>Description generale</span>
+                <textarea name="jalon_description[]" rows="3"></textarea>
+            </label>
+            <div class="assignment-block">
+                <div class="assignment-header">
+                    <div>
+                        <h4>Intervenants lies</h4>
+                        <p class="muted">Definissez les actions attendues pour chaque intervenant.</p>
+                    </div>
+                    <button type="button" class="btn-secondary btn-add-assignment">Ajouter un intervenant</button>
+                </div>
+                <div class="assignment-list"></div>
+            </div>
+        `;
+        const assignmentList = card.querySelector(".assignment-list");
+        assignmentList.appendChild(createAssignmentRow(index));
+        jalonList.appendChild(card);
+        wireJalonCard(card);
+    });
+
+    document.querySelectorAll(".jalon-card").forEach(wireJalonCard);
+</script>
+{% endblock %}

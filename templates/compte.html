@@ -1,0 +1,201 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="page-header">
+        <h1>Mon Compte</h1>
+        <div class="header-actions">
+        {% if is_me %}
+            <a href="{{ url_for('settings') }}" class="btn-primary">Modifier le profil</a>
+        {% endif %}
+        {% if not is_me %}
+            <a href="{{ url_for('chat', contact_id=user[0]) }}" class="btn-primary">💬 Contacter</a>
+        {% endif %}
+    </div>
+    </div>
+    
+    <div class="settings-grid" style="grid-template-columns: 1fr;">
+        
+    <div class="settings-card" style="border-left: 5px solid 
+    {% if user[5] == 3 %}var(--admin-color){% elif user[5] == 1 %}var(--intervenant-color){% else %}var(--cdp-color){% endif %};">
+    
+    <h3 style="margin-bottom: 15px; padding-bottom: 10px;">Informations Générales</h3>
+    
+    <div class="profile-edit-section" style="align-items: flex-start;">
+        <div class="avatar-large-edit">
+            <img src="{{ user[6] }}" alt="User Avatar" class="avatar-image" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        
+        <div class="profile-text-inputs" style="gap: 5px;">
+            <p style="font-size: 1.2rem; font-weight: 600; margin: 0;">{{ user[1] }}</p>
+            <p style="color: #6b7280; margin-bottom: 10px;">{{ user[2] }}</p>
+            
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <span style="font-weight: 500;">Statut :</span>
+                <span class="role-badge 
+                    {% if user[5] == 3 %}role-admin
+                    {% elif user[5] == 2 %}role-cdp
+                    {% else %}role-intervenant{% endif %}">
+                    
+                    {% if user[5] == 3 %}
+                        <i class="fas fa-user-shield"></i> Administrateur
+                    {% elif user[5] == 2 %}
+                        <i class="fas fa-briefcase"></i> Chef de Projet
+                    {% else %}
+                        <i class="fas fa-code"></i> Intervenant
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    </div>
+            {% if user[4] and user[5] != 2 %}
+            <div class="info-item" style="margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                <h4 style="margin: 0 0 10px; font-size: 1.1rem;">Mes Compétences :</h4>
+                <div class="tags-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    {% for tag in user[4].split(',') %}
+                        {% if tag.strip() %}
+                            <span class="tag" style="background: #eefdf3; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #bbf7d0;">
+                                {{ tag.strip() }}
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    <div class="settings-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+    
+    <div class="settings-card">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <i class="fas fa-user-edit"></i> À propos
+        </h3>
+        <div class="bio-container">
+            {% if user[7] %}
+                <p class="aboutim">{{ user[7] }}</p>
+            {% elif is_me %}
+                <a href="{{ url_for('settings') }}" style="display: block; text-align: center; padding: 30px; border: 2px dashed #d1d5db; border-radius: 12px; text-decoration: none; color: #6b7280; transition: 0.3s;">
+                    <i class="fas fa-pen-nib" style="font-size: 1.5rem; color: var(--primary-color); margin-bottom: 10px;"></i>
+                    <p style="margin: 0;">Cliquez ici pour rédiger votre biographie et booster votre profil !</p>
+                </a>
+            {% else %}
+                <p style="color: #9ca3af; font-style: italic;">Cet utilisateur n'a pas encore rédigé de biographie.</p>
+            {% endif %}
+        </div>    
+    </div>
+
+    <div class="settings-card">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <i class="fas fa-info-circle"></i> Informations Complémentaires
+        </h3>
+        
+        <div class="profile-details-list">
+            <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-calendar-check"></i> Disponibilité :</span>
+                <span class="status-pill {{ 'status-dispo' if user[8] == 'Disponible' else 'status-occupe' }}">
+                    {{ user[8] if user[8] else "Non précisée" }}
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-language"></i> Langues :</span>
+                <span>{{ user[9] if user[9] else "Aucune(s) langue(s) renseignée(s)" }}</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-link"></i> Liens :</span>
+                <div class="social-links">
+                    {% if user[10] %}
+                        {% for link in user[10].split(',') %}
+                            <a href="{{ link.strip() }}" target="_blank" class="mini-link-box">{{ link.strip() }}</a>
+                        {% endfor %}
+                    {% else %}
+                        <span>Aucun(s) lien(s) ajouté(s)</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+        <div class="settings-card" style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 1.17em; border: none;">Documents</h2>
+                {% if is_me %}
+                <button onclick="document.getElementById('upload-doc').click()" class="btn-primary" style="font-size: 0.85rem; padding: 6px 12px;">
+                    + Ajouter un document
+                </button>
+                <form id="form-upload-doc" action="{{ url_for('upload_document') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+                    <input type="file" id="upload-doc" name="file" onchange="document.getElementById('form-upload-doc').submit();">
+                </form>
+                {% endif %}
+            </div>
+
+            <div class="documents-list">
+                {% if documents and documents|length > 0 %}
+                    <table class="gsite-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; color: #6b7280; font-size: 0.9rem;">
+                                <th style="padding-bottom: 10px;">Nom du fichier</th>
+                                <th style="padding-bottom: 10px;">Date</th>
+                                <th style="padding-bottom: 10px; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr style="border-top: 1px solid #f3f4f6;">
+                                <td style="padding: 12px 0; display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.2rem;">📄</span>
+                                    <span style="font-weight: 500; color: #374151;">{{ doc['nom'] }}</span>
+                                </td>
+                                <td style="padding: 12px 0; color: #6b7280; font-size: 0.9rem;">
+                                    {{ doc['date'] }}
+                                </td>
+                                <td style="padding: 12px 0; text-align: right;">
+                                    <a href="{{ url_for('download_document', doc_id=doc['id']) }}" class="btn-secondary" style="padding: 4px 8px; text-decoration: none;">⬇️</a>
+                                    {% if is_me %}
+                                    <a href="{{ url_for('delete_document', doc_id=doc['id']) }}" class="btn-danger" style="padding: 4px 8px; text-decoration: none; margin-left: 5px;" onclick="return confirm('Supprimer ce fichier ?')">🗑️</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div style="text-align: center; padding: 30px; color: #9ca3af; background: #f9fafb; border-radius: 8px;">
+                        <p style="margin: 0;">Aucun document disponible pour le moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="account-dashboard-grid">
+            
+            {% if is_me %}
+            <div class="settings-card stat-card">
+                <h3>💬 Communications</h3>
+                <div class="stat-content">
+                    <p><strong style="color: {% if unread_messages > 0 %}#22c55e{% else %}#6b7280{% endif %};">{{ unread_messages }}</strong> message(s) non lu(s)</p>
+                    <a href="{{ url_for('chat') }}" class="mini-link">Ouvrir la messagerie →</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="settings-card stat-card">
+                <h3>📋 Projets & Missions</h3>
+                <div class="stat-content">
+                    <p><strong>{{ projects|length }}</strong> projet(s) en cours</p>
+                    {% if is_me %}
+                        {% if user[5] == 2 %}
+                            <p><strong>{{ waiting_projects }}</strong> en attente</p>
+                        {% else %}
+                            <p style="color: #22c55e;"><strong>{{ opportunities }}</strong> opportunités 🔥</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+        </div> 
+
+        
+        </div> </div> {% endblock %}

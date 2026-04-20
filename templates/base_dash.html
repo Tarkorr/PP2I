@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="static/img/logo_tab.png">
+    <title>Prospector - {{ active_page|capitalize }}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/db_style.css') }}">
+</head>
+
+<body class="app-body">
+    <script>
+        (function() {
+            // 1. Ajouter la classe 'preload' pour tuer les animations
+            document.body.classList.add('preload');
+
+            // 2. Appliquer le thème sombre immédiatement
+            const localMode = localStorage.getItem('theme');
+            const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (localMode === 'dark' || (!localMode && systemMode)) {
+                document.body.classList.add('dark-mode');
+            }
+
+            // 3. Réactiver les animations une fois la page chargée
+            window.addEventListener('load', () => {
+                requestAnimationFrame(() => {
+                    document.body.classList.remove('preload');
+                });
+            });
+        })();
+    </script>
+    <nav id="navbar" class="navbar">
+        <div class="navbar-inner">
+            <div class="navbar-left">
+<a href="{{ url_for('dashboard') }}" class="navbar-brand" style="display: flex; align-items: center; gap: 10px;">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" 
+         alt="Logo" 
+         class="main_title"> Prospector
+</a>
+            </div>
+
+            <div class="navbar-right">
+                {% if current_user.email %}
+
+                    <a class="navbar-link-profile" href="{{ url_for('compte') }}">
+                        <img src="{{ current_user.gravatar_url }}" class="avatar-mini-nav" alt="Avatar">
+                        <span>{{ current_user.nom }}</span>
+                    </a>
+                    <a class="navbar-link btn-logout" href="{{ url_for('logout') }}">Se déconnecter</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-wrapper">
+        
+        <nav class="sidebar">
+            <a href="{{ url_for('dashboard') }}" class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                Dashboard
+            </a>
+            <a href="{{ url_for('projects') }}" class="menu-item {% if active_page == 'projects' %}active{% endif %}">
+                Mes Projets
+            </a>
+            {% if current_user.autorisations == 3 %}
+                <a href="{{ url_for('proposals') }}" class="menu-item">Suivi des Projets</a>
+            {% endif %}
+            <a href="{{ url_for('chat') }}" class="menu-item {% if active_page == 'chat' %}active{% endif %}">
+                Chat
+            </a>
+            {% if current_user.autorisations == 3  %}
+                <a href="{{ url_for('attribution') }}" class="menu-item {% if active_page == 'attribution' %}active{% endif %}">
+                    Attribution
+                </a>
+            {% endif %}
+            {% if current_user.autorisations == 3 %}
+                <a href="{{ url_for('gestion_clients') }}" class="menu-item {% if active_page == 'gestion_clients' %}active{% endif %}">
+                    Gestion Clients
+                </a>
+            {% endif %}
+            {% if current_user.autorisations == 3 %}
+                <a href="{{ url_for('gestion_site') }}" class="menu-item {% if active_page == 'gestion_site' %}active{% endif %}">
+                    Gestion site
+                </a>
+            {% endif %}
+            {% if current_user.autorisations == 3 %}
+                <a href="{{ url_for('stats') }}" class="menu-item {% if active_page == 'stats' %}active{% endif %}">
+                    Stats
+                </a>
+            {% endif %}
+            {% if current_user.autorisations == 2 %}
+            <a href="{{ url_for('intervenants') }}" class="menu-item {% if active_page == 'intervenants' %}active{% endif %}">
+                Intervenants
+            </a>
+            {% endif %}
+            <div class="menu-item" id="theme-toggle" onclick="toggleTheme()">Thème Sombre</div>
+            
+            <div class="bottom-menu">
+                <a href="{{ url_for('compte') }}" class="menu-item {% if active_page == 'compte' %}active{% endif %}">Mon compte</a>
+                <a href="{{ url_for('settings') }}" class="menu-item {% if active_page == 'settings' %}active{% endif %}">Settings</a>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            
+            <div class="flash-overlay">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-toast alert-{{ category }}">
+                                <div class="flash-content">
+                                    <span class="flash-icon"></span>
+                                    <span class="flash-message">{{ message }}</span>
+                                </div>
+                                <button class="flash-close" onclick="this.parentElement.remove();">&times;</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            {% block content %}{% endblock %}
+        
+        </main> 
+        </div> 
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const themeBtn = document.getElementById('theme-toggle');
+            const body = document.body;
+            const applyTheme = (isDark) => {
+                body.classList.toggle('dark-mode', isDark);
+                if (themeBtn) {
+                    themeBtn.textContent = isDark ? "Thème Clair" : "Thème Sombre"; 
+                }
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            };
+            if (localStorage.getItem('theme') === 'dark') {
+                applyTheme(true);
+            }
+            themeBtn?.addEventListener('click', () => {
+                applyTheme(!body.classList.contains('dark-mode'));
+            });
+            document.querySelectorAll(".flash-toast").forEach(toast => {
+                setTimeout(() => {
+                    toast.classList.add("fade-out");
+                    toast.addEventListener("animationend", () => toast.remove(), { once: true });
+                }, 4000);
+            });
+        });
+    </script>
+</body>
+</html>

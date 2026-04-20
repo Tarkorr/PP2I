@@ -1,0 +1,134 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+    <div class="tinder-wrapper">
+        
+        <div style="width: 360px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0; font-size: 18px; color: #4b5563;">
+                {% if current_project_title %}
+                    🔥 Swipe : {{ current_project_title }}
+                {% else %}
+                    🔥 Mode Swipe
+                {% endif %}
+            </h2>
+            <a href="{{ url_for('intervenants') }}" class="btn-secondary" style="text-decoration: none; font-size: 13px; padding: 6px 12px;">
+                📋 Retour
+            </a>
+        </div>
+
+        <div class="card-stack" id="card-stack">
+            
+            {% if next_prospect %}
+            <div class="prospect-card next-card">
+                 <div class="card-header-img"></div>
+                 <div class="card-body" style="padding: 40px; text-align: center;">
+                    <p style="color: #9ca3af;">Chargement...</p>
+                 </div>
+            </div>
+            {% endif %}
+
+            {% if current_prospect %}
+            <div class="prospect-card active-card" data-prospect-id="{{ current_prospect.id }}" id="active-card">
+                
+                <div class="card-header-img">
+                    <div class="prospect-avatar">{{ current_prospect.initiales }}</div>
+                    <span class="match-rate">Match: {{ current_prospect.taux_match }}%</span>
+                </div>
+                
+                <div class="card-body">
+                    <div class="card-intro">
+                        <h2>{{ current_prospect.nom }}</h2>
+                        <p class="role">{{ current_prospect.role }}</p>
+                    </div>
+                    
+                    <div class="tags-container">
+                        {% if current_prospect.tags %}
+                            {% for tag in current_prospect.tags[:4] %}
+                                <span class="tag">#{{ tag }}</span>
+                            {% endfor %}
+                            {% if current_prospect.tags|length > 4 %}
+                                <span class="tag">+{{ current_prospect.tags|length - 4 }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="tag" style="background:none; border:none; color:#999;">Aucun tag</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="bio">{{ current_prospect.description }}</p>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="empty-state" style="margin-top: 100px; padding: 20px;">
+                <div style="font-size: 50px; margin-bottom: 20px;">🎉</div>
+                <h3 style="color: #374151; margin-bottom: 10px;">Terminé !</h3>
+                <p style="color: #6b7280; margin-bottom: 30px;">Vous avez vu tous les candidats pour ce projet.</p>
+                
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <a href="{{ url_for('intervenants') }}" class="btn-secondary" style="text-decoration: none; padding: 10px 20px; border-radius: 8px; border: 1px solid #d1d5db; color: #374151;">
+                        Retour liste
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        {% if current_prospect %}
+        <div class="tinder-actions">
+            <button class="action-btn pass" data-action="PASS" onclick="handleAction('PASS')">✖</button>
+            <button class="action-btn like" data-action="LIKE" onclick="handleAction('LIKE')">♥</button>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <script>
+        // Récupération sécurisée des variables Python
+        const PROJECT_ID = "{{ current_project_id|default('') }}";
+        const API_BASE_URL = "{{ url_for('tinder_action', target_id=0, action='ACTION') }}".replace('0/ACTION', '');
+        const ACTIVE_CARD = document.getElementById('active-card');
+
+        function handleAction(action) {
+            if (!ACTIVE_CARD) return;
+
+            const targetId = ACTIVE_CARD.dataset.prospectId;
+            const cardElement = ACTIVE_CARD;
+            
+            // 1. Animation visuelle
+            cardElement.style.transition = 'transform 0.4s ease-out, opacity 0.4s ease-out';
+            if (action === 'LIKE') {
+                cardElement.style.transform = 'translate(400px, -50px) rotate(20deg)';
+            } else {
+                cardElement.style.transform = 'translate(-400px, -50px) rotate(-20deg)';
+            }
+            cardElement.style.opacity = '0';
+
+            // 2. Appel API (avec project_id dans le body)
+            fetch(`${API_BASE_URL}${targetId}/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_id: PROJECT_ID })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Rechargement pour afficher le suivant
+                    setTimeout(() => {
+                        window.location.reload(); 
+                    }, 300); 
+                } else {
+                    console.error("Erreur action:", data.message);
+                    // Annuler l'animation si erreur
+                    cardElement.style.transform = 'translate(0, 0)';
+                    cardElement.style.opacity = '1';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur réseau:', error);
+                cardElement.style.transform = 'translate(0, 0)';
+                cardElement.style.opacity = '1';
+            });
+        }
+    </script>
+{% endblock %}

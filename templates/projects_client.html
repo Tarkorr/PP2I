@@ -1,0 +1,130 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<div class="projects-container client-projects">
+    
+    <div class="page-header">
+        <div class="header-left">
+            <div class="eyebrow">Espace Projet</div>
+            <h1>Demandes de projet</h1>
+            <p class="muted">Formulez de nouvelles demandes, suivez vos statuts et identifiez rapidement les tags à prioriser.</p>
+        </div>
+    </div>
+
+    <div class="client-projects-grid">
+        
+        <section class="card request-card" id="request-form">
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">Formulaire</div>
+                    <h2>Décrire votre besoin</h2>
+                    <p class="muted">Un titre clair, une courte description et quelques tags suffisent pour démarrer.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('projects') }}" class="request-form">
+                
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Email du chef de projet *</span>
+                        <select name="cdp_email" required>
+                            <option value="">Sélectionner un chef de projet</option>
+                            {% for option in cdp_options %}
+                                <option value="{{ option.email }}" {% if option.email == form_data.get('cdp_email') %}selected{% endif %}>{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Email du client *</span>
+                        <select name="client_email" required>
+                            <option value="">Sélectionner un client</option>
+                            {% for option in client_options %}
+                                <option value="{{ option.email }}" {% if option.email == form_data.get('client_email') %}selected{% endif %}>{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Titre du projet *</span>
+                        <input type="text" name="titre" placeholder="Refonte site vitrine, développement d'une API..." value="{{ form_data.get('titre', '') }}" required>
+                    </label>
+                    <label class="form-field">
+                        <span>Date souhaitée de livraison</span>
+                        <input type="date" name="date_fin" value="{{ form_data.get('date_fin', '') }}">
+                    </label>
+                </div>
+
+                <label class="form-field">
+                    <span>Description</span>
+                    <textarea name="description" rows="4" placeholder="Quelques lignes sur le contexte, les objectifs, les contraintes...">{{ form_data.get('description', '') }}</textarea>
+                </label>
+
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Intervenants (emails)</span>
+                        <textarea name="intervenants" rows="2" placeholder="inter1@example.com, inter2@example.com">{{ form_data.get('intervenants', '') }}</textarea>
+                        <small class="muted">Séparez les emails par des virgules.</small>
+                    </label>
+                    <label class="form-field">
+                        <span>Jalons (1 par ligne)</span>
+                        <textarea name="jalons" rows="2" placeholder="2024-10-01: Kickoff&#10;2024-11-15: Livraison v1">{{ form_data.get('jalons', '') }}</textarea>
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>Tags</span>
+                        <input type="text" name="tags" placeholder="marketing, mobile, urgent" value="{{ form_data.get('tags', '') }}">
+                    </label>
+                    <label class="form-field">
+                        <span>Statut initial</span>
+                        <select name="status">
+                            {% for key, data in status_map.items() %}
+                                <option value="{{ key }}" {% if key == form_data.get('status') %}selected{% endif %}>{{ data.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <div class="actions-row">
+                    <button type="submit" class="btn-primary">Envoyer la demande</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card insights-card">
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">Synthèse</div>
+                    <h3>Vue d'ensemble</h3>
+                </div>
+            </div>
+
+            <div class="status-insights">
+                {% for key, data in status_map.items() %}
+                    <div class="status-chip {{ data.color }}">
+                        <span class="chip-label">{{ data.label }}</span>
+                        <span class="chip-count">{{ status_board[key]|length }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="tag-cloud">
+                {% if tag_counter %}
+                    {% for tag, count in tag_counter.items() %}
+                        <span class="tag-pill">{{ tag }} <span class="tag-count">x{{ count }}</span></span>
+                    {% endfor %}
+                {% else %}
+                    <p class="muted">Ajoutez des tags pour retrouver vos demandes plus vite.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+</div>
+{% endblock %}

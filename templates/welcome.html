@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-shell">
+    <div class="auth-card">
+        <span class="status-pill">Plateforme active</span>
+        <h1 class="auth-title">Bienvenue sur Prospector</h1>
+        <p class="auth-subtitle">
+            Pour accéder à l'application, connectez-vous ou créez un compte.
+        </p>
+
+        <div class="auth-actions">
+            <a class="btn btn-primary" href="{{ url_for('login') }}">
+                Se connecter
+            </a>
+            <a class="btn btn-secondary" href="{{ url_for('register') }}">
+                Vous n'avez pas de compte ? Créez-en un
+            </a>
+        </div>
+    </div>
+    <aside class="auth-panel">
+        <div class="auth-panel-inner">
+            <span class="eyebrow">Prospector</span>
+            <h2>Une vision claire pour chaque projet.</h2>
+            <p>Du premier contact au suivi, tout reste lisible et actionnable.</p>
+            <ul class="auth-list">
+                <li>Tableaux visuels et priorités</li>
+                <li>Notifications utiles, sans bruit</li>
+                <li>Données clients à portée de main</li>
+            </ul>
+        </div>
+    </aside>
+</div>
+{% endblock %}

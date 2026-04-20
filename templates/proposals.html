@@ -1,0 +1,81 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+
+    <div class="projects-container client-projects">
+        
+        <div class="page-header">
+            <div class="header-left">
+                <h1>Suivi des Projets</h1>
+            </div>
+            {% if is_client %}
+            <a href="{{ url_for('projects') }}#request-form" class="btn-primary" style="text-decoration: none;">+ Nouveau Projet</a>
+            {% endif %}
+        </div>
+
+        <div class="status-board">
+            
+            {% for col_id, col_data in columns_config.items() %}
+            {% set status_key = 'draft' if col_id == 1 else ('waiting' if col_id == 2 else ('nego' if col_id == 3 else 'won')) %}
+
+            <div class="status-column" 
+                 data-status-key="{{ status_key }}"
+                 ondrop="drop(event)" 
+                 ondragover="allowDrop(event)">
+                
+                <div class="column-header">
+                    <div>
+                        <span class="col-eyebrow">{{ col_data.label }}</span>
+                        <h3 id="count-{{ status_key }}">{{ board[col_id]|length }}</h3>
+                    </div>
+                    <span class="status-dot {{ col_data.color }}"></span>
+                </div>
+
+                <div class="column-content" style="min-height: 200px; display: flex; flex-direction: column; gap: 15px;">
+                    {% if board[col_id] %}
+                        {% for card in board[col_id] %}
+                        <article class="status-card" 
+                                 draggable="true" 
+                                 ondragstart="drag(event)" 
+                                 ondragend="dragEnd(event)" id="card-{{ card.id }}" 
+                                 data-project-id="{{ card.id }}"
+                                 style="cursor: grab;">
+                            
+                            <div class="card-top">
+                                <span class="status-badge {{ col_data.color }}">{{ col_data.label }}</span>
+                                {% if card.date_fin %}
+                                    <span class="duedate">{{ card.date_fin }}</span>
+                                {% endif %}
+                            </div>
+
+                            <h4 style="margin-bottom: 2px;">{{ card.titre }}</h4>
+                            <div style="font-size: 13px; color: #6b7280; margin-bottom: 10px;">
+                                Client : <strong>{{ card.client }}</strong>
+                            </div>
+
+                            <div class="tag-row">
+                                {% for tag in card.tags %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #f3f4f6;">
+                                <span style="font-weight: bold; color: #111827;">{{ card.prix }}</span>
+                                <a href="{{ url_for('projects', p=card.id) }}" class="mini-link" onmousedown="event.stopPropagation()">Voir →</a>
+                            </div>
+
+                        </article>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+<script>
+    const UPDATE_URL = "{{ url_for('update_project_status') }}";
+</script>
+<script src="{{ url_for('static', filename='js/proposal.js') }}"></script>
+
+{% endblock %}

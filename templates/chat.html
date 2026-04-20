@@ -1,0 +1,132 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+    <div class="chat-wrapper">
+        
+        <div class="chat-sidebar">
+            <div class="chat-search">
+                <input type="text" id="contact-search" placeholder="Rechercher un prospect...">
+            </div>
+            
+            <div class="contacts-list" style="overflow-y: auto;">
+                {% for contact in contacts %}
+                <div class="contact-item {% if contact.active %}active{% endif %}" 
+     onclick="window.location.href='{{ url_for('chat', contact_id=contact.id) }}'">
+    
+    <div class="avatar" style="background-color: {% if contact.active %}#22c55e{% else %}#6b7280{% endif %}; position: relative;">
+        {{ contact.initiales }}
+        
+        {% if contact.unread_count > 0 %}
+            <span style="
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                background-color: #ef4444;
+                color: white;
+                font-size: 10px;
+                width: 15px;
+                height: 15px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;">
+                {{ contact.unread_count }}
+            </span>
+        {% endif %}
+    </div>
+    
+    <div class="contact-info">
+        <div class="contact-name" style="font-weight: {% if contact.unread_count > 0 %}bold{% else %}normal{% endif %};">
+            {{ contact.nom }}
+        </div>
+        
+        <div class="contact-last-msg">
+            {% if contact.unread_count > 0 %}
+                <span style="color: #22c55e;">{{ contact.unread_count }} nouveau(x) message(s)</span>
+            {% else %}
+                Cliquez pour discuter
+            {% endif %}
+        </div>
+    </div>
+</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="chat-window">
+            
+            <div class="chat-header">
+                {% if selected_id %}
+                    <div class="avatar-small" style="background-color: #22c55e; margin-right: 10px;">
+                        {{ active_contact_name[:2].upper() }}
+                    </div>
+                {% endif %}
+                
+                <h3>{{ active_contact_name }} 
+                    {% if selected_id %}
+                        <span class="status-online">● En ligne</span>
+                    {% endif %}
+                </h3>
+                
+                <button class="icon-btn">⋮</button>
+            </div>
+
+            <div class="messages-container" id="chat-feed">
+                
+                {% if not selected_id %}
+                    <div class="empty-state" style="margin: auto; text-align: center;">
+                        <p style="font-size: 50px;">👈</p>
+                        <p>Sélectionnez un client à gauche pour commencer.</p>
+                    </div>
+                {% else %}
+                    {% for msg in messages %}
+                        <div class="message {% if msg.is_me %}sent{% else %}received{% endif %}">
+                            <div class="bubble">{{ msg.text }}</div>
+                            <span class="timestamp">{{ msg.time }}</span>
+                        </div>
+                    {% else %}
+                        <div class="empty-state" style="margin-top: 50px; text-align: center;">
+                            <p>Aucun message pour l'instant.</p>
+                            <p>Envoyez le premier ! 👋</p>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+            </div>
+
+            {% if selected_id %}
+            <form class="chat-input-area" method="POST" action="{{ url_for('chat', contact_id=selected_id) }}">
+                <!-- <button type="button" class="attach-btn">📎</button> -->
+                <input type="text" name="message" placeholder="Écrivez votre message..." required autocomplete="off">
+                <button type="submit" class="send-btn">Envoyer</button>
+            </form>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const chatFeed = document.getElementById('chat-feed');
+            const searchInput = document.getElementById('contact-search');
+            const contactItems = document.querySelectorAll('.contact-item');
+
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+
+                contactItems.forEach(item => {
+                    const name = item.querySelector('.contact-name').textContent.toLowerCase();
+                                    if (name.includes(searchTerm)) {
+                        item.style.display = "flex";
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            });
+                if(chatFeed) {
+                    chatFeed.scrollTop = chatFeed.scrollHeight;
+                }
+        });
+    </script>
+{% endblock %}

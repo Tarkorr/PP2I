@@ -1,0 +1,221 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+
+<div class="gestion_du_sites">
+        
+    <div class="gsite-header">
+        <h1>Utilisateurs</h1>
+        <div style="display: flex; gap: 15px;">
+            <button onclick="openPopup('popup-ajout')" class="btn-primary">✚</button>
+
+            <button onclick="openPopup('popup-import')" class="btn-primary">Importer CSV</button>
+            
+            <button onclick="openPopup('popup-validation')" class="btn-primary" style="background-color: #f59e0b; border-color: #d97706;">
+                Validations
+            </button>
+            
+        </div>
+    </div>
+
+    <div class="gsite-search">
+        <input type="text" id="name-search" placeholder="Recherche">🔎
+    </div>
+   
+
+    <div id="popup-ajout" class="overlay-popup {% if error == "Cette adresse e-mail est déjà utilisée."  %}activate-popup{% endif %}">
+        <div class="content-popup">
+            <h3 style="margin-bottom: 20px;">Ajouter un utilisateur :</h3>
+            <form method="POST" class="add-form">
+                <div class="form-group">
+                    <div>
+                        <label for="nom">Nom :</label>
+                    </div>
+                        <input class="form-input" type="text" name="nom" id="nom" required autocomplete="name">
+                </div>      
+                <div class="form-group">
+                    <div>
+                        <label for="email">Adresse e-mail : </label>
+                    </div>                    
+                        <input class="form-input" type="email" name="email" id="email" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <div>
+                        <label for="mdp">Mot de passe : </label>
+                    </div>
+                    <input class="form-input" type="password" name="mdp" id="mdp" required autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="role">Type de compte</label>
+                    <select class="form-input" name="role" id="role">
+                        <option value="intervenant">Intervenant.e</option>
+                        <option value="cdp">Chef de projet</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="gsite-right">
+                    <button type="submit" name="action" value="ajout-utilisateur" class="btn-primary">Ajouter</button>
+                </div>
+                {% if error == "Cette adresse e-mail est déjà utilisée." %}
+                        <div class="gsite-error">
+                            {{ error }}
+                        </div>
+                {% endif %}
+            </form> 
+        </div>
+    </div>
+
+    <div id="popup-import" class="overlay-popup">
+        <div class="content-popup">
+            <h1>Ajouter un fichier :</h1>
+            <form method="POST" action="/gestion_site" enctype="multipart/form-data">
+                <div>
+                    <input type="file" id="fichier" name="fichier" accept=".csv">
+                </div>
+                <div class="gsite-right">
+                    <button type="submit" name="action" value="import-csv" class="btn-primary">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="popup-suppr" class="overlay-popup {% if error == "Sélectionner la personne à supprimer"  %}activate-popup{% endif %}">
+        <div class="content-popup">
+            <h1>Êtes-vous sur de vouloir supprimer ?</h1>
+            <button type="submit" name="action" value="supprimer" form="form-gsite" class="btn-danger" style = "align-items: center; font-size: 20px;">Confirmer</button> {# TODO: mettre le nombre déléments supprimer #}
+            {% if error == "Sélectionner la personne à supprimer" %}
+                        <div class="gsite-error">
+                            {{ error }}
+                        </div>
+            {% endif %}
+        </div>
+        
+    </div>
+
+<div id="popup-validation" class="overlay-popup">
+    <div class="content-popup" style="max-width: 900px;">
+        <h1>Demandes de création de compte</h1>
+        <p style="color: #666; margin-bottom: 20px;">Validez ou refusez les nouveaux inscrits.</p>
+        
+        <div class="table-card" style="box-shadow: none; border: 1px solid #eee;">
+            <table class="gsite-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Rôle demandé</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set demandes = users | selectattr('valide', 'equalto', 0) | list %}
+
+                    {% if demandes|length > 0 %}
+                    
+                        {% for user in demandes %}
+                        <tr>
+                            <td>{{ user['nom'] }}</td>
+                            <td>{{ user['email'] }}</td>
+                            <td><span class="tag-pill">Nouveau</span></td>
+                            <td style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                                <form method="POST" action="/gestion_site">
+                                    <input type="hidden" name="user_id" value="{{ user['id'] }}">
+                                    <button type="submit" name="action" value="validate-user" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">✔ Accepter</button>
+                                    <button type="submit" name="action" value="delete-user" class="btn-danger" style="padding: 5px 10px; font-size: 12px; margin: 0;">✖ Refuser</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    {% else %}
+                        
+                        {# 3. Si la liste filtrée est vide, on affiche ce message #}
+                        <tr id="empty-msg">
+                            <td colspan="4" style="text-align: center; color: #999; padding: 20px;">
+                                Aucune demande en attente.
+                            </td>
+                        </tr>
+
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<form method="POST" action="/gestion_site" id = "form-gsite">
+    <div class="table-card">
+        
+        <table class="gsite-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>id</th>
+                    <th>nom</th>
+                    <th>e-mail</th>
+                    <th>tags</th>
+                    <th style="text-align: right;">autorisation</th>
+                </tr>
+            </thead>
+            
+            <tbody>
+            {% for user in users %}
+                <tr class="name-item {{ 'attente-validation' if user['valide'] == 0 else '' }}" onclick="location.href='{{ url_for('compte', id=user.id) }}'">
+                    <td> <input type="checkbox" name = "user-ids" value="{{ user['id'] }}" onclick = "event.stopPropagation()"/> {# https://developer.mozilla.org/fr/docs/Web/API/Event/stopPropagation en gros ça lance pasc l'autre événement#}
+                    <td>{{ user['id'] }}</td>
+                    <td class="name-select">{{ user['nom'] }}</td>
+                    <td>{{ user['email'] }}</td>
+                    <td>{{ user['tags'] if user['tags'] else '-' }}</td>
+                    <td style="text-align: right;">
+                        {{ user['autorisations'] if user['autorisations'] is not none else '-' }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            
+        </table>
+        
+    </div>
+</form>
+    <div class="gsite-right" style="gap: 10px;">
+        <button type="submit" name="action" value="export-csv" class="btn-primary" form="form-gsite">Exporter</button>
+        <button type ="button" class="btn-danger" onclick="openPopup('popup-suppr')" >Supprimer</button> 
+    </div>
+
+    
+</div>
+
+<script>
+    const openPopup = (popupId) => {
+        const popup = document.getElementById(popupId);
+        if(popup) {
+            popup.classList.add('activate-popup');
+        }
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('overlay-popup')) {
+            event.target.classList.remove('activate-popup');
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('name-search');
+        const tableau = document.querySelectorAll('.name-item');
+
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+
+            tableau.forEach(element => {
+                const name = element.querySelector('.name-select').textContent.toLowerCase();
+                if(name.includes(searchTerm)){
+                    element.style.display = "";
+                } else{
+                    element.style.display = "none";
+                }
+            });
+        });
+    });
+
+</script>
+
+{% endblock %}

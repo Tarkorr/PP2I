@@ -1,0 +1,201 @@
+{% extends "base_dash.html" %}
+
+{% block content %}
+<div class="project-detail-container">
+
+    <div class="detail-header">
+        <div class="header-left">
+            <a href="{{ url_for('projects') }}" class="back-link">← Retour aux projets</a>
+            <div class="title-row">
+                <h1>{{ p.titre }}</h1>
+                <span class="badge badge-{{ 'success' if p.status == 'terminé' else 'primary' }}">
+                    {{ p.status|capitalize }}
+                </span>
+            </div>
+            <div class="meta-row">
+                <span>📅 Du {{ p.date_debut }} au {{ p.date_fin }}</span>
+                <span>👤 {{ p.client.nom }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+
+        <div class="main-column">
+            
+            <div class="detail-card">
+                <h3>Jalons</h3>
+
+                {% if p.jalons %}
+                    {% set current_jalon = p.jalons[0] %}
+                    
+                    <div class="milestone-panel">
+                        <div class="milestone-current">
+                            <div class="milestone-current-header">
+                                <span class="milestone-title">Jalon actuel</span>
+                                <span class="milestone-name">{{ current_jalon.nom }}</span>
+                            </div>
+                            <div class="milestone-meta">Date limite : {{ current_jalon.date or "Non définie" }}</div>
+                            {% if current_jalon.description %}
+                                <p class="milestone-description">{{ current_jalon.description }}</p>
+                            {% endif %}
+
+                            <div class="milestone-tasks">
+                                {% if current_jalon.taches %}
+                                    {% for tache in current_jalon.taches %}
+                                        <span class="milestone-task">{{ tache }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="milestone-empty">Aucune tâche assignée.</span>
+                                {% endif %}
+                            </div>
+
+                            {% if p.current_jalon_tasks %}
+                            <div class="milestone-assigned">
+                                <span class="milestone-title">Vos taches</span>
+                                <ul>
+                                    {% for tache in p.current_jalon_tasks %}
+                                        <li>{{ tache }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="milestone-track">
+                            {% for jalon in p.jalons %}
+                                <div class="milestone-card">
+                                    <div class="milestone-card-title">{{ jalon.nom }}</div>
+                                    <div class="milestone-card-date">{{ jalon.date or "..." }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                {% else %}
+                    <p class="empty-msg">Aucun jalon défini.</p>
+                {% endif %}
+            </div>
+
+            <div class="detail-card">
+                <h3>Notes & Description</h3>
+                <div class="desc-content">
+                    {% if p.description %}
+                        <p>{{ p.description }}</p>
+                    {% else %}
+                        <p class="empty-msg">Aucune description n'a encore été fournie pour ce projet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if is_admin or is_cdp %}
+            <div class="detail-card planning-card" id="planning-form">
+                <div class="planning-header">
+                    <div>
+                        <h3>Gestion du projet</h3>
+                        <p class="muted">Ajoutez les intervenants et structurez les jalons.</p>
+                    </div>
+                    <a class="btn-secondary" href="{{ url_for('edit_jalons', p=p.id) }}">Modifier les jalons</a>
+                </div>
+                <form method="POST" class="request-form" action="{{ url_for('projects', p=p.id) }}">
+                    <input type="hidden" name="action" value="planning">
+                    <label class="form-field">
+                        <span>Intervenants (emails)</span>
+                        <textarea name="intervenants" rows="2" placeholder="inter1@example.com, inter2@example.com">{{ p.intervenants | join(', ') }}</textarea>
+                        <small class="muted">Séparez les emails par des virgules ou des retours à la ligne.</small>
+                    </label>
+                    <div class="actions-row">
+                        <button type="submit" class="btn-primary">Mettre à jour</button>
+                        <span class="muted">Le planning sera visible par l'équipe.</span>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="side-column">
+            
+            <div class="detail-card">
+                <h3>Info Client</h3>
+                <div class="client-info-box">
+                    <div class="avatar-large" style="background: #007bff;">{{ p.client.nom[0] }}</div>
+                    <div>
+                        <strong>{{ p.client.nom }}</strong>
+                        <p>{{ p.client.secteur }}</p>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span>Email:</span> <a href="mailto:{{ p.client.email }}">{{ p.client.email }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <h3>Tags</h3>
+                <div class="tags-container">
+                    {% for tag in p.tags %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <h3>Équipe</h3>
+                {% if is_admin %}
+                <div class="info-list">
+                    <div class="info-item">
+                        <span>Chef de projet:</span> {{ p.cdp_email or "Non défini" }}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="tags-container" style="margin-top: 10px;">
+                    {% for email in p.intervenants %}
+                        <span class="tag">{{ email }}</span>
+                    {% else %}
+                        <span class="tag muted-tag">Aucun intervenant</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if is_admin %}
+            <div class="detail-card" id="edit-form">
+                <h3>Modifier la demande</h3>
+                <form method="POST" class="request-form" action="{{ url_for('projects', p=p.id) }}">
+                    <input type="hidden" name="action" value="edit_project">
+                    <label class="form-field">
+                        <span>Titre du projet *</span>
+                        <input type="text" name="titre" value="{{ p.titre }}" required>
+                    </label>
+                    <label class="form-field">
+                        <span>Date souhaitée de livraison</span>
+                        <input type="date" name="date_fin" value="{{ p.date_fin }}">
+                    </label>
+                    <label class="form-field">
+                        <span>Description</span>
+                        <textarea name="description" rows="3">{{ p.description }}</textarea>
+                    </label>
+                    <label class="form-field">
+                        <span>Tags</span>
+                        <input type="text" name="tags" value="{{ p.tags | join(', ') }}" placeholder="marketing, mobile, urgent">
+                    </label>
+                    <label class="form-field">
+                        <span>Statut</span>
+                        <select name="status">
+                            {% for key, label in status_map.items() %}
+                                <option value="{{ key }}" {% if key == p.status_key %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <div class="actions-row">
+                        <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
